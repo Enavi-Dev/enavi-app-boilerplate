@@ -57,12 +57,14 @@ const productController = {
   getProducts: async function(ctx, next) {
     const nProducts = 20;
     var cursor = ctx && ctx.request.query.cursor ? ctx.request.query.cursor : '',
-    products;
+      products;
+    var searchQuery = ctx && ctx.request.query.searchQuery ? ctx.request.query.searchQuery : '';
+
 
     try {
 
       products = await productService
-        .getProducts(nProducts, cursor);
+        .getProducts(nProducts, cursor, searchQuery);
 
     } catch (error) {
       this.responseHandler.onError(ctx)(error);

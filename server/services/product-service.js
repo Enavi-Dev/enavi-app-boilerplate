@@ -23,10 +23,11 @@ var productService = {
    * @since 1.0.0
    * @param {int} nProducts number of products.
    * @param {string} cursor current cursor.
+   * @param {string} search query
    * @return {Array}
    */
-  getProducts: async function (nProducts,  cursor) {
-    const products = await product.getProducts(nProducts, cursor);
+  getProducts: async function (nProducts, cursor, searchQuery) {
+    const products = await product.getProducts(nProducts, cursor, searchQuery);
     return products;
   },
 

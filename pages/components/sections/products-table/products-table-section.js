@@ -9,6 +9,8 @@ import useSWR, { mutate } from "swr";
 import {restFetchWrapper} from "../../../../react-utils/request-handler";
 import { useState, useEffect } from "react";
 import ProductsTable from "./components/products-table";
+import SearchBar from "./components/search-bar"
+
 
 
 const appBaseUrl = HOST;
@@ -16,14 +18,21 @@ const appBaseUrl = HOST;
 var nestedProperty = require("nested-property");
 
 
-function getProductQueryString(cursor){
-  return `${appBaseUrl}/get-products?${(cursor && `cursor=${cursor}`) || ''}`;
+function getProductQueryString(cursor, searchQuery) {
+  return `${appBaseUrl}/get-products?${cursor ? `cursor=${cursor}` : ''}${searchQuery ? `&searchQuery=${searchQuery}` : ''}`
 }
 
 
 function ProductsTableSection({restFetch, toggleMainLoader}) {
 
   const [pageCursor, setCurrentPageCursor] = useState(function () {
+    return "";
+  });
+
+  const [searchQuery, setSearchQuery] = useState(function () {
+    return "";
+  });
+  const [searchQueryItem, setSearchQueryItem] = useState(function () {
     return "";
   });
 
@@ -36,11 +45,11 @@ function ProductsTableSection({restFetch, toggleMainLoader}) {
   });
 
   const { data, error } = useSWR(
-    getProductQueryString(pageCursor), restFetchWrapper(restFetch)
+    getProductQueryString(pageCursor, searchQuery), restFetchWrapper(restFetch)
   );
 
   //Prefetch the next page.
-  useSWR(getProductQueryString(pageInfo.nextCursor), restFetchWrapper(restFetch));
+  useSWR(getProductQueryString(pageInfo.nextCursor, searchQuery), restFetchWrapper(restFetch));
 
 
   useEffect(() => {
@@ -88,15 +97,43 @@ function ProductsTableSection({restFetch, toggleMainLoader}) {
     await mutate(getProductQueryString(pageCursor));
   }
 
+  function handleQueryChange(value) {
+    setSearchQueryItem(function () {
+      return value;
+    });
+  }
+  function lunchSearch() {
+    setSearchQuery(function () {
+      return searchQueryItem;
+    });
+  }
+
+  function handleClearButton() {
+    setSearchQueryItem(function () {
+      return "";
+    });
+    setSearchQuery(function () {
+      return "";
+    });
+  }
+
 
   return (
     <>
     <Page title="Products" fullWidth>
       {
-      <>
+          <>
         <Card>
-            <>
-              <Card.Section>
+            <SearchBar
+              value={searchQueryItem}
+              handleQueryChange={handleQueryChange}
+              handleClearButton={handleClearButton}
+              lunchSearch={lunchSearch}
+              />
+        </Card>
+        <Card>
+          <>
+            <Card.Section>
               <ProductsTable
                 data={data}
                 clearFetchedData={clearFetchedData}
