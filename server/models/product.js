@@ -60,12 +60,14 @@ var product = {
      * @since 1.0.0
      * @param {int} nProducts number of the products to fetch.
      * @param {string} cursor current cursor.
+     * @param {string} search
      * @return {array}
      */
-    getProducts: async function(nProducts = 20, cursor) {
+    getProducts: async function(nProducts = 20, cursor, search) {
       const query = gql`
           query {
             products(
+              query: "${search}",
               first: ${nProducts},
               reverse: true,
               ${cursor && cursor.length ? `after:"${cursor},"` : ''}

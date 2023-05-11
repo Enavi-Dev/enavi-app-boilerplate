@@ -56,14 +56,12 @@ const productController = {
   */
   getProducts: async function(ctx, next) {
     const nProducts = 20;
+    const search = ctx && ctx.request.query.search ? ctx.request.query.search : '';
     var cursor = ctx && ctx.request.query.cursor ? ctx.request.query.cursor : '',
     products;
 
     try {
-
-      products = await productService
-        .getProducts(nProducts, cursor);
-
+      products = await productService.getProducts(nProducts, cursor, search);
     } catch (error) {
       this.responseHandler.onError(ctx)(error);
     }
