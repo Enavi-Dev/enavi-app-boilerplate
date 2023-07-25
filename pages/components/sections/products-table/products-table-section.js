@@ -2,12 +2,13 @@ import {
   Page,
   Card,
   Stack,
-  Pagination
+  Pagination,
+  TextField
 } from "@shopify/polaris";
 import useSWR, { mutate } from "swr";
 
 import {restFetchWrapper} from "../../../../react-utils/request-handler";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import ProductsTable from "./components/products-table";
 
 
@@ -16,13 +17,13 @@ const appBaseUrl = HOST;
 var nestedProperty = require("nested-property");
 
 
-function getProductQueryString(cursor){
-  return `${appBaseUrl}/get-products?${(cursor && `cursor=${cursor}`) || ''}`;
+function getProductQueryString(cursor, search){
+  return `${appBaseUrl}/get-products?${(cursor && `cursor=${cursor}`) || ''}&search=${search || ''}`;
 }
 
 
 function ProductsTableSection({restFetch, toggleMainLoader}) {
-
+  const [textFieldValue, setTextFieldValue] = useState('');
   const [pageCursor, setCurrentPageCursor] = useState(function () {
     return "";
   });
@@ -36,11 +37,11 @@ function ProductsTableSection({restFetch, toggleMainLoader}) {
   });
 
   const { data, error } = useSWR(
-    getProductQueryString(pageCursor), restFetchWrapper(restFetch)
+    getProductQueryString(pageCursor, textFieldValue), restFetchWrapper(restFetch)
   );
 
   //Prefetch the next page.
-  useSWR(getProductQueryString(pageInfo.nextCursor), restFetchWrapper(restFetch));
+  useSWR(getProductQueryString(pageInfo.nextCursor, textFieldValue), restFetchWrapper(restFetch));
 
 
   useEffect(() => {
@@ -85,40 +86,51 @@ function ProductsTableSection({restFetch, toggleMainLoader}) {
   async function clearFetchedData(){
     toggleMainLoader(() => true);
     setTimeout(() => toggleMainLoader(() => false), 2000);
-    await mutate(getProductQueryString(pageCursor));
+    await mutate(getProductQueryString(pageCursor, textFieldValue));
   }
 
+  const handleTextFieldChange = useCallback(
+    (value) => setTextFieldValue(value),
+    []
+  );
 
   return (
     <>
-    <Page title="Products" fullWidth>
-      {
-      <>
-        <Card>
-            <>
-              <Card.Section>
-              <ProductsTable
-                data={data}
-                clearFetchedData={clearFetchedData}
-                restFetch={restFetch}
-                />
-              </Card.Section>
-              <Stack distribution="center">
-                <div className="p-8">
-                  <Pagination
-                    hasPrevious={pageInfo.hasPreviousPage}
-                    onPrevious={handleLastPageClick}
-                    hasNext={pageInfo.hasNextPage}
-                    onNext={handleNextPageClick}
+      <Page title="Products" fullWidth>
+        {
+          <>
+            <Card>
+              <>
+                <Card.Section>
+                  <TextField
+                    label="Search products"
+                    value={textFieldValue}
+                    onChange={handleTextFieldChange}
+                    placeholder="Enter a product name or keyword"
+                    autoComplete="off"
                   />
-                </div>
-              </Stack>
-            </>
-        </Card>
-      </>
-      }
-    </Page>
-  </>
+                  <ProductsTable
+                    data={data}
+                    clearFetchedData={clearFetchedData}
+                    restFetch={restFetch}
+                  />
+                </Card.Section>
+                <Stack distribution="center">
+                  <div className="p-8">
+                    <Pagination
+                      hasPrevious={pageInfo.hasPreviousPage}
+                      onPrevious={handleLastPageClick}
+                      hasNext={pageInfo.hasNextPage}
+                      onNext={handleNextPageClick}
+                    />
+                  </div>
+                </Stack>
+              </>
+            </Card>
+          </>
+        }
+      </Page>
+    </>
   );
 }
 
